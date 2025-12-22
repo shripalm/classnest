@@ -25,3 +25,4 @@ htmlcov/
 *.db
 .sqlite
 *.sqlite
+*.env
