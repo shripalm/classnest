@@ -78,3 +78,23 @@ class AuthService:
                 detail="User not found"
             )
         return UserResponse.from_orm(user)
+
+    @staticmethod
+    def soft_delete_user(db: Session, user_id: str) -> dict:
+        """Soft delete a user account."""
+        user = UserRepository.get_user_by_id(db, user_id)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+        
+        deleted_user = UserRepository.soft_delete_user(db, user_id)
+        logger.info(f"User soft deleted: {user.email}")
+        
+        return {
+            "message": "User account deleted successfully",
+            "user_id": str(deleted_user.id),
+            "deleted_at": deleted_user.deleted_at
+        }
+

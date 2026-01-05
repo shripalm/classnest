@@ -76,3 +76,28 @@ def sign_in(credentials: UserLogin, db: Session = Depends(get_db_sync)):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error"
         )
+
+
+@router.delete("/users/{user_id}", status_code=status.HTTP_200_OK)
+def delete_user(user_id: str, db: Session = Depends(get_db_sync)):
+    """Soft delete a user account by user ID.
+    
+    This endpoint performs a soft delete - the user record is marked as deleted
+    but not permanently removed from the database.
+    
+    Args:
+        user_id: The UUID of the user to delete
+    
+    Returns:
+        A success response with deletion timestamp
+    """
+    try:
+        return AuthService.soft_delete_user(db, user_id)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Delete user error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error"
+        )
