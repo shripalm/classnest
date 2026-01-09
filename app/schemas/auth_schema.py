@@ -33,29 +33,13 @@ class ChildResponse(BaseModel):
 
 
 class UserCreate(BaseModel):
-    name: str
+    full_name: str
     email: EmailStr
-    country_code: str
-    phone: str
-    password: str
-    confirm_password: str
-    address: str
-    children: List[ChildCreate]
+    country_code: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    children: List[ChildCreate] = []
     terms_accepted: bool
-
-    @field_validator("password")
-    @classmethod
-    def password_not_empty(cls, v):
-        if not v or len(v) < 6:
-            raise ValueError("Password must be at least 6 characters")
-        return v
-
-    @field_validator("confirm_password")
-    @classmethod
-    def passwords_match(cls, v, info):
-        if 'password' in info.data and v != info.data['password']:
-            raise ValueError("Passwords do not match")
-        return v
 
     @field_validator("terms_accepted")
     @classmethod
@@ -65,18 +49,49 @@ class UserCreate(BaseModel):
         return v
 
 
-class UserLogin(BaseModel):
-    email: EmailStr
-    password: str
-    remember_me: bool = False
+class SendOTPRequest(BaseModel):
+    """Request to send OTP."""
+    email: EmailStr = Field(..., description="Email address to send OTP")
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "email": "user@example.com"
+            }
+        }
+
+
+class SendOTPResponse(BaseModel):
+    """Response after sending OTP."""
+    message: str
+    expires_in: int = Field(..., description="OTP expiration time in minutes")
+
+
+class VerifyOTPRequest(BaseModel):
+    """Request to verify OTP - email or phone required."""
+    email: Optional[EmailStr] = Field(None, description="Email address")
+    phone: Optional[str] = Field(None, description="Phone number")
+    otp_code: str = Field(
+        ...,
+        description="OTP code",
+        min_length=4,
+        max_length=10
+    )
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "email": "user@example.com",
+                "phone": None,
+                "otp_code": "1010"
+            }
+        }
 
 
 class UserResponse(BaseModel):
     id: str
     email: str
     full_name: str
-    username: str
-    name: Optional[str]
     phone: Optional[str]
     country_code: Optional[str]
     address: Optional[str]
@@ -98,34 +113,55 @@ class UserResponse(BaseModel):
 class AuthResponse(BaseModel):
     access_token: str
     token_type: str
-    user: UserResponse
+    user_id: str
+    email: str
+    full_name: str
+    expires_in: int
 
 
-class TokenData(BaseModel):
-    email: Optional[str] = None
-
-
-class LoginRequest(BaseModel):
-    """Login request schema - accepts email or username."""
-    email_or_username: str = Field(
+class RegisterRequest(BaseModel):
+    """User registration request schema with OTP verification."""
+    email: EmailStr = Field(..., description="User email address")
+    full_name: str = Field(
         ..., 
-        description="Email address or username",
-        min_length=3,
-        max_length=255,
-        examples=["user@example.com", "john_doe"]
+        description="User full name",
+        min_length=2,
+        max_length=255
     )
-    password: str = Field(
-        ..., 
-        description="User password",
-        min_length=6,
-        max_length=100
-    )
-
+    country_code: Optional[str] = Field(None, description="Country code")
+    phone: Optional[str] = Field(None, description="Phone number")
+    address: Optional[str] = Field(None, description="Address")
+    children: List[ChildCreate] = Field(default=[], description="Children data")
+    terms_accepted: bool = Field(..., description="Terms acceptance")
+    
     class Config:
         json_schema_extra = {
             "example": {
-                "email_or_username": "user@example.com",
-                "password": "yourpassword123"
+                "email": "user@example.com",
+                "full_name": "John Doe",
+                "country_code": "+1",
+                "phone": "1234567890",
+                "address": "123 Main St",
+                "children": [],
+                "terms_accepted": True
+            }
+        }
+
+
+class RegisterResponse(BaseModel):
+    """User registration response schema."""
+    user_id: str = Field(..., description="User UUID")
+    email: str = Field(..., description="User email")
+    full_name: str = Field(..., description="User full name")
+    created_at: datetime = Field(..., description="Account creation timestamp")
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "user_id": "123e4567-e89b-12d3-a456-426614174000",
+                "email": "user@example.com",
+                "full_name": "John Doe",
+                "created_at": "2024-01-15T10:30:00Z"
             }
         }
 
@@ -160,55 +196,106 @@ class TokenPayload(BaseModel):
     iat: Optional[datetime] = None
 
 
-class RegisterRequest(BaseModel):
-    """User registration request schema."""
+class SignupRequest(BaseModel):
+    """Signup request schema - creates user and sends OTP."""
     email: EmailStr = Field(..., description="User email address")
-    username: str = Field(
-        ..., 
-        description="Username",
-        min_length=3,
-        max_length=50,
-        pattern="^[a-zA-Z0-9_-]+$"
-    )
-    password: str = Field(
-        ..., 
-        description="User password",
-        min_length=8,
-        max_length=100
-    )
     full_name: str = Field(
-        ..., 
+        ...,
         description="User full name",
         min_length=2,
         max_length=255
     )
+    phone: str = Field(..., description="Phone number")
+    country_code: Optional[str] = Field(None, description="Country code")
+    address: Optional[str] = Field(None, description="Address")
+    children: List[ChildCreate] = Field(default=[], description="Children data")
+    terms_accepted: bool = Field(..., description="Terms acceptance")
     
     class Config:
         json_schema_extra = {
             "example": {
                 "email": "user@example.com",
-                "username": "john_doe",
-                "password": "SecurePass123!",
-                "full_name": "John Doe"
+                "full_name": "John Doe",
+                "phone": "1234567890",
+                "country_code": "+1",
+                "address": "123 Main St",
+                "children": [
+                    {
+                        "name": "Emma Doe",
+                        "date_of_birth": "20/05/2015",
+                        "gender": "female",
+                        "photo": "https://example.com/emma.jpg",
+                        "interest": "Drawing, Mathematics"
+                    },
+                    {
+                        "name": "Alex Doe",
+                        "date_of_birth": "15/08/2018",
+                        "gender": "male",
+                        "photo": "https://example.com/alex.jpg",
+                        "interest": "Sports, Science"
+                    }
+                ],
+                "terms_accepted": True
             }
         }
 
 
-class RegisterResponse(BaseModel):
-    """User registration response schema."""
+class SignupResponse(BaseModel):
+    """Signup response - OTP sent."""
     user_id: str = Field(..., description="User UUID")
-    email: str = Field(..., description="User email")
-    username: str = Field(..., description="Username")
-    full_name: str = Field(..., description="User full name")
-    created_at: datetime = Field(..., description="Account creation timestamp")
+    message: str = Field(..., description="Success message")
+    otp_expires_in: int = Field(..., description="OTP expiration time in minutes")
     
     class Config:
         json_schema_extra = {
             "example": {
                 "user_id": "123e4567-e89b-12d3-a456-426614174000",
-                "email": "user@example.com",
-                "username": "john_doe",
-                "full_name": "John Doe",
-                "created_at": "2024-01-15T10:30:00Z"
+                "message": "OTP sent to email and phone",
+                "otp_expires_in": 10
             }
         }
+
+
+class SigninRequest(BaseModel):
+    """Signin request - provide email OR phone."""
+    email: Optional[EmailStr] = Field(None, description="Email address")
+    phone: Optional[str] = Field(None, description="Phone number")
+    
+    class Config:
+        json_schema_extra = {
+            "examples": [
+                {
+                    "email": "user@example.com",
+                    "phone": None
+                },
+                {
+                    "email": None,
+                    "phone": "1234567890"
+                }
+            ]
+        }
+
+
+class VerifyOTPResponse(BaseModel):
+    """Unified OTP verification response for signup and signin."""
+    access_token: str = Field(..., description="JWT access token")
+    token_type: str = Field(default="bearer", description="Token type")
+    user_id: str = Field(..., description="User UUID")
+    email: str = Field(..., description="User email")
+    full_name: str = Field(..., description="User full name")
+    is_new_user: bool = Field(..., description="Whether this was a signup verification")
+    expires_in: int = Field(..., description="Token expiration time in minutes")
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                "token_type": "bearer",
+                "user_id": "123e4567-e89b-12d3-a456-426614174000",
+                "email": "user@example.com",
+                "full_name": "John Doe",
+                "is_new_user": True,
+                "expires_in": 60
+            }
+        }
+

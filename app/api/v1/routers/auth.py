@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.db.session import get_db_sync
 from app.schemas.auth_schema import (
-    UserCreate, UserLogin, UserResponse, AuthResponse, 
-    LoginRequest, RegisterRequest, LoginResponse, RegisterResponse
+    SignupRequest, SignupResponse, SigninRequest, VerifyOTPRequest,
+    VerifyOTPResponse
 )
 from app.schemas.response import SuccessResponse
 from app.services.auth_service import AuthService
@@ -14,67 +14,74 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.post("/signup", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-def sign_up(user_data: UserCreate, db: Session = Depends(get_db_sync)):
-    """Register a new user with children.
+@router.post("/signup", response_model=SuccessResponse[SignupResponse], status_code=status.HTTP_201_CREATED)
+def signup(request: SignupRequest, db: Session = Depends(get_db_sync)):
+    """Register a new user and send OTP to email and phone.
     
-    Expected payload:
-    {
-        "parent": {
-            "name": "John Doe",
-            "email": "john@example.com",
-            "countryCode": "+1",
-            "phone": "1234567890",
-            "password": "SecurePass123",
-            "confirmPassword": "SecurePass123",
-            "address": "123 Main St"
-        },
-        "children": [
-            {
-                "name": "Jane Doe",
-                "dateOfBirth": "14/02/2002",
-                "gender": "Female",
-                "photo": "url_or_base64",
-                "interest": "Reading"
-            }
-        ],
-        "termsAccepted": true
-    }
+    Creates an inactive user and sends OTP to both email and phone number.
     """
     try:
-        return AuthService.sign_up(db, user_data)
+        result = AuthService.signup(db, request)
+        return SuccessResponse(
+            status="success",
+            message="OTP sent to email and phone",
+            data=result
+        )
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Signup error: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error"
+            detail="Signup failed"
         )
 
 
-@router.post("/signin", response_model=AuthResponse, status_code=status.HTTP_200_OK)
-def sign_in(credentials: UserLogin, db: Session = Depends(get_db_sync)):
-    """Sign in user with email and password.
+@router.post("/signin", response_model=SuccessResponse[dict])
+def signin(request: SigninRequest, db: Session = Depends(get_db_sync)):
+    """Request OTP for login via email or phone.
     
-    Expected payload:
-    {
-        "credentials": {
-            "email": "john@example.com",
-            "password": "SecurePass123"
-        },
-        "rememberMe": false
-    }
+    Provide either email or phone (at least one required).
+    OTP will be sent to the provided contact method.
     """
     try:
-        return AuthService.sign_in(db, credentials)
+        result = AuthService.signin(db, request)
+        return SuccessResponse(
+            status="success",
+            message="OTP sent successfully",
+            data=result
+        )
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Signin error: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error"
+            detail="Signin failed"
+        )
+
+
+@router.post("/verify-otp", response_model=SuccessResponse[VerifyOTPResponse])
+def verify_otp(request: VerifyOTPRequest, db: Session = Depends(get_db_sync)):
+    """Verify OTP for both signup completion and signin.
+    
+    Provide email or phone with the OTP code.
+    Returns JWT token for signin or completes signup for new users.
+    """
+    try:
+        result = AuthService.verify_otp(db, request)
+        return SuccessResponse(
+            status="success",
+            message="OTP verified successfully",
+            data=result
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"OTP verification error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="OTP verification failed"
         )
 
 
