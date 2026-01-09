@@ -10,7 +10,6 @@ class OTP(Base):
     __tablename__ = "otps"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4, nullable=False)
-    user_id = Column(UUID(as_uuid=True), nullable=True)  # Can be None for signup OTP
     email = Column(String(255), nullable=False, index=True)
     phone = Column(String(20), nullable=True)  # Optional phone number for OTP
     otp_code = Column(String(10), nullable=False)
@@ -22,7 +21,6 @@ class OTP(Base):
 
     __table_args__ = (
         Index('idx_otps_email', 'email'),
-        Index('idx_otps_user_id', 'user_id'),
     )
 
     def __repr__(self):

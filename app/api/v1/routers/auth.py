@@ -85,6 +85,30 @@ def verify_otp(request: VerifyOTPRequest, db: Session = Depends(get_db_sync)):
         )
 
 
+@router.post("/resend-otp", response_model=SuccessResponse[dict])
+def resend_otp(request: SigninRequest, db: Session = Depends(get_db_sync)):
+    """Resend OTP for signup or signin.
+    
+    Provide either email or phone (at least one required).
+    Generates a new OTP and sends it to the provided contact method.
+    """
+    try:
+        result = AuthService.resend_otp(db, request)
+        return SuccessResponse(
+            status="success",
+            message="OTP resent successfully",
+            data=result
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Resend OTP error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Resend OTP failed"
+        )
+
+
 @router.delete("/users/{user_id}", status_code=status.HTTP_200_OK)
 def delete_user(user_id: str, db: Session = Depends(get_db_sync)):
     """Soft delete a user account by user ID.

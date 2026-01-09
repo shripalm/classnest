@@ -287,3 +287,56 @@ class AuthService:
             "deleted_at": deleted_user.deleted_at
         }
 
+    @staticmethod
+    def resend_otp(db: Session, request: SigninRequest) -> dict:
+        """Resend OTP for signup or signin via email or phone.
+        
+        User provides either email or phone. A new OTP is generated and sent.
+        Works for both users in signup flow (not yet verified) and signin flow.
+        """
+        # Validate that at least one contact method is provided
+        if not request.email and not request.phone:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Either email or phone is required"
+            )
+        
+        # Determine which contact to use
+        contact_email = request.email
+        contact_phone = request.phone
+        
+        # If email provided, try to find user by email
+        if contact_email:
+            user = UserRepository.get_user_by_email(db, contact_email)
+        # If only phone provided, search by phone
+        elif contact_phone:
+            user = UserRepository.get_user_by_phone(db, contact_phone)
+        else:
+            user = None
+        
+        if not user:
+            contact_info = contact_email or contact_phone
+            logger.warning(f"Resend OTP attempt with non-existent contact: {contact_info}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+        
+        # Generate new OTP
+        otp_code = AuthService.generate_otp()
+        
+        # Create new OTP record with user's email and phone
+        otp_email = user.email
+        otp_phone = contact_phone or user.phone
+        otp = OTPRepository.create_otp(db, otp_email, otp_code, phone=otp_phone)
+        
+        contact_info = contact_email or contact_phone
+        logger.info(f"OTP resent via {contact_info} for user: {user.email}")
+        
+        # TODO: Send OTP via email or SMS
+        logger.debug(f"New OTP for {contact_info}: {otp_code}")
+        
+        return {
+            "message": "OTP resent successfully",
+            "expires_in": settings.OTP_EXPIRE_MINUTES
+        }
