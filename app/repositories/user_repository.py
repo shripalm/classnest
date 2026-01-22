@@ -114,3 +114,26 @@ class UserRepository:
             db.commit()
             db.refresh(user)
         return user
+
+    @staticmethod
+    def get_all_users(db: Session, skip: int = 0, limit: int = 20, include_deleted: bool = False) -> tuple[list[User], int]:
+        """Get all users with pagination.
+        
+        Args:
+            db: Database session
+            skip: Number of records to skip
+            limit: Maximum number of records to return
+            include_deleted: Whether to include soft-deleted users
+        
+        Returns:
+            Tuple of (list of users, total count)
+        """
+        query = db.query(User)
+        
+        if not include_deleted:
+            query = query.filter(User.is_deleted == False)
+        
+        total = query.count()
+        users = query.offset(skip).limit(limit).all()
+        
+        return users, total

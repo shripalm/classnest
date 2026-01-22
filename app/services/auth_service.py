@@ -247,6 +247,12 @@ class AuthService:
         
         logger.info(f"OTP verification successful for: {user.email}")
         
+        # Get user's children
+        children_data = []
+        if user.children:
+            from app.schemas.auth_schema import ChildResponse
+            children_data = [ChildResponse.from_orm(child) for child in user.children]
+        
         return {
             "access_token": access_token,
             "token_type": "bearer",
@@ -254,7 +260,8 @@ class AuthService:
             "email": user.email,
             "full_name": user.full_name,
             "is_new_user": is_new_user,
-            "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES
+            "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES,
+            "children": children_data
         }
 
     @staticmethod

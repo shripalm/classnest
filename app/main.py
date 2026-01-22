@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
-from app.api.v1.routers import health, auth, classes, courses, dev_settings
+from app.api.v1.routers import health, auth, classes, courses, dev_settings, tutors, favorites, schools
 
 from app.core.config import settings
 from app.utils.logging import logger
@@ -44,6 +44,9 @@ app.include_router(health.router, prefix="/api/v1", tags=["health"])
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
 app.include_router(classes.router, prefix="/api/v1", tags=["classes"])
 app.include_router(courses.router, prefix="/api/v1", tags=["courses"])
+app.include_router(tutors.router, prefix="/api/v1", tags=["tutors"])
+app.include_router(favorites.router, prefix="/api/v1", tags=["favorites"])
+app.include_router(schools.router, prefix="/api/v1", tags=["schools"])
 app.include_router(dev_settings.router, prefix="/api/v1/dev_settings", tags=["dev_settings"])
 
 from app.db.listeners import before_cursor_execute, after_cursor_execute

@@ -95,7 +95,9 @@ class UserResponse(BaseModel):
     phone: Optional[str]
     country_code: Optional[str]
     address: Optional[str]
-    is_active: bool
+    is_verified: bool
+    is_email_verified: Optional[bool] = None
+    is_phone_verified: Optional[bool] = None
     children: List[ChildResponse]
     created_at: datetime
     updated_at: datetime
@@ -285,6 +287,7 @@ class VerifyOTPResponse(BaseModel):
     full_name: str = Field(..., description="User full name")
     is_new_user: bool = Field(..., description="Whether this was a signup verification")
     expires_in: int = Field(..., description="Token expiration time in minutes")
+    children: List[ChildResponse] = Field(default_factory=list, description="User's children profiles")
     
     class Config:
         json_schema_extra = {
@@ -295,7 +298,19 @@ class VerifyOTPResponse(BaseModel):
                 "email": "user@example.com",
                 "full_name": "John Doe",
                 "is_new_user": True,
-                "expires_in": 60
+                "expires_in": 60,
+                "children": [
+                    {
+                        "id": "child-uuid",
+                        "name": "Jane Doe",
+                        "date_of_birth": "2015-05-15",
+                        "gender": "female",
+                        "photo": "url",
+                        "interest": "Math",
+                        "created_at": "2026-01-23T00:00:00",
+                        "updated_at": "2026-01-23T00:00:00"
+                    }
+                ]
             }
         }
 

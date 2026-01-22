@@ -1,12 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from app.db.session import get_db_sync
 from app.schemas.auth_schema import (
     SignupRequest, SignupResponse, SigninRequest, VerifyOTPRequest,
-    VerifyOTPResponse
+    VerifyOTPResponse, UserResponse
 )
-from app.schemas.response import SuccessResponse
+from app.schemas.response import SuccessResponse, PaginatedResponse
 from app.services.auth_service import AuthService
+from app.repositories.user_repository import UserRepository
+from app.utils.pagination import PaginationParams
 import logging
 
 logger = logging.getLogger(__name__)
@@ -131,4 +133,81 @@ def delete_user(user_id: str, db: Session = Depends(get_db_sync)):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error"
+        )
+
+
+@router.get("/users", response_model=PaginatedResponse[UserResponse])
+def get_all_users(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    include_deleted: bool = Query(False, description="Include soft-deleted users"),
+    db: Session = Depends(get_db_sync)
+):
+    """Get all users with pagination.
+    
+    - **page**: Page number (default: 1)
+    - **page_size**: Number of items per page (default: 20, max: 100)
+    - **include_deleted**: Include soft-deleted users (default: false)
+    """
+    try:
+        pagination = PaginationParams(page=page, page_size=page_size)
+        users, total = UserRepository.get_all_users(
+            db,
+            skip=pagination.skip,
+            limit=pagination.limit,
+            include_deleted=include_deleted
+        )
+        
+        pagination_data = pagination.get_pagination_data(total)
+        user_responses = [UserResponse.from_orm(user) for user in users]
+        
+        return PaginatedResponse(
+            status="success",
+            message="Users retrieved successfully",
+            data=user_responses,
+            total=pagination_data["total"],
+            page=pagination_data["page"],
+            page_size=pagination_data["page_size"],
+            total_pages=pagination_data["total_pages"]
+        )
+    except Exception as e:
+        logger.error(f"Error retrieving users: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve users"
+        )
+
+
+@router.get("/users/{user_id}", response_model=SuccessResponse[UserResponse])
+def get_user_profile(user_id: str, db: Session = Depends(get_db_sync)):
+    """Get a specific user's profile by ID.
+    
+    Args:
+        user_id: The UUID of the user to retrieve
+    
+    Returns:
+        User profile with all details
+    """
+    try:
+        user = UserRepository.get_user_by_id(db, user_id)
+        
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+        
+        user_response = UserResponse.from_orm(user)
+        return SuccessResponse(
+            status="success",
+            message="User profile retrieved successfully",
+            data=user_response
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error retrieving user profile: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve user profile"
         )
