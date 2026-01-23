@@ -3,7 +3,8 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db_sync
 from app.schemas.auth_schema import (
     SignupRequest, SignupResponse, SigninRequest, VerifyOTPRequest,
-    VerifyOTPResponse, UserResponse
+    VerifyOTPResponse, UserResponse, InitiateDeleteRequest, VerifyDeleteRequest,
+    DeleteResponse
 )
 from app.schemas.response import SuccessResponse, PaginatedResponse
 from app.services.auth_service import AuthService
@@ -210,4 +211,62 @@ def get_user_profile(user_id: str, db: Session = Depends(get_db_sync)):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve user profile"
+        )
+
+
+@router.post("/delete-account/initiate", response_model=SuccessResponse[dict])
+def initiate_account_deletion(request: InitiateDeleteRequest, db: Session = Depends(get_db_sync)):
+    """Initiate account deletion process.
+    
+    Accepts email or mobile number and sends OTP to the user.
+    
+    Args:
+        request: Contains email or phone number
+    
+    Returns:
+        Success message with OTP expiration time
+    """
+    try:
+        result = AuthService.initiate_account_deletion(db, email=request.email, phone=request.phone)
+        return SuccessResponse(
+            status="success",
+            message="OTP sent successfully",
+            data=result
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error initiating account deletion: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to initiate account deletion"
+        )
+
+
+@router.post("/delete-account/verify", response_model=SuccessResponse[DeleteResponse])
+def verify_and_delete_account(request: VerifyDeleteRequest, db: Session = Depends(get_db_sync)):
+    """Verify OTP and delete user account.
+    
+    After verifying the OTP code, the user account is soft-deleted.
+    
+    Args:
+        request: Contains email or phone, and OTP code
+    
+    Returns:
+        Success message with deleted user details
+    """
+    try:
+        result = AuthService.verify_and_delete_account(db, email=request.email, phone=request.phone, otp_code=request.otp_code)
+        return SuccessResponse(
+            status="success",
+            message="Account deleted successfully",
+            data=result
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error verifying and deleting account: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to delete account"
         )

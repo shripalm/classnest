@@ -347,3 +347,140 @@ class AuthService:
             "message": "OTP resent successfully",
             "expires_in": settings.OTP_EXPIRE_MINUTES
         }
+
+    @staticmethod
+    def initiate_account_deletion(db: Session, email: str = None, phone: str = None) -> dict:
+        """Initiate account deletion process by sending OTP.
+        
+        User must provide either email or phone.
+        OTP will be sent to the provided contact method.
+        """
+        # Validate that at least one contact method is provided
+        if not email and not phone:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Either email or phone is required"
+            )
+        
+        # Find user by email or phone
+        user = None
+        if email:
+            user = UserRepository.get_user_by_email(db, email)
+        elif phone:
+            user = UserRepository.get_user_by_phone(db, phone)
+        
+        if not user:
+            contact_info = email or phone
+            logger.warning(f"Delete initiation attempt with non-existent contact: {contact_info}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+        
+        # Generate OTP
+        otp_code = AuthService.generate_otp()
+        
+        # Create OTP record with user's email and phone
+        otp_email = user.email
+        otp_phone = phone or user.phone
+        otp = OTPRepository.create_otp(db, otp_email, otp_code, phone=otp_phone)
+        
+        contact_info = email or phone
+        logger.info(f"Account deletion OTP initiated for: {contact_info}")
+        
+        # TODO: Send OTP via email or SMS
+        logger.debug(f"OTP for deletion {contact_info}: {otp_code}")
+        
+        return {
+            "message": "OTP sent to your registered email/phone",
+            "expires_in": settings.OTP_EXPIRE_MINUTES
+        }
+
+    @staticmethod
+    def verify_and_delete_account(db: Session, email: str = None, phone: str = None, otp_code: str = None) -> dict:
+        """Verify OTP and delete user account (soft delete).
+        
+        User provides email or phone with OTP code.
+        Upon successful verification, account is soft-deleted.
+        """
+        # Validate that at least one contact method is provided
+        if not email and not phone:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Either email or phone is required"
+            )
+        
+        # Get valid OTP by email or phone
+        otp = None
+        user = None
+        
+        if email:
+            otp = OTPRepository.get_valid_otp(db, email)
+            if otp:
+                user = UserRepository.get_user_by_email(db, email)
+        elif phone:
+            # Get OTP by phone
+            otp = db.query(OTP).filter(
+                OTP.phone == phone,
+                OTP.is_verified == False,
+                OTP.expires_at > datetime.utcnow()
+            ).order_by(OTP.created_at.desc()).first()
+            if otp:
+                user = UserRepository.get_user_by_phone(db, phone)
+        
+        if not otp:
+            contact_info = email or phone
+            logger.warning(f"No valid OTP found for account deletion: {contact_info}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="OTP expired or not found"
+            )
+        
+        # Check maximum attempts
+        if otp.attempts >= 5:
+            logger.warning(f"Too many failed attempts for deletion OTP: {otp.id}")
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Too many failed attempts. Please request a new OTP"
+            )
+        
+        # Verify OTP code
+        if otp.otp_code != otp_code:
+            OTPRepository.increment_attempts(db, otp.id)
+            contact_info = email or phone
+            logger.warning(f"Invalid OTP attempt for account deletion: {contact_info}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid OTP code"
+            )
+        
+        # Get user if not already retrieved
+        if not user:
+            if email:
+                user = UserRepository.get_user_by_email(db, email)
+            else:
+                user = UserRepository.get_user_by_phone(db, phone)
+        
+        if not user:
+            contact_info = email or phone
+            logger.warning(f"User not found for account deletion: {contact_info}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+        
+        # Mark OTP as verified
+        if email:
+            OTPRepository.verify_otp(db, otp.id, email=email)
+        else:
+            OTPRepository.verify_otp(db, otp.id, phone=phone)
+        
+        # Soft delete the user
+        deleted_user = UserRepository.soft_delete_user(db, user.id)
+        logger.info(f"User account deleted (soft delete): {user.email}")
+        
+        return {
+            "message": "Account successfully deleted",
+            "user_id": str(deleted_user.id),
+            "email": deleted_user.email
+        }

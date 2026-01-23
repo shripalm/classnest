@@ -314,3 +314,44 @@ class VerifyOTPResponse(BaseModel):
             }
         }
 
+
+class InitiateDeleteRequest(BaseModel):
+    """Request to initiate account deletion and send OTP."""
+    email: Optional[EmailStr] = Field(None, description="Email address")
+    phone: Optional[str] = Field(None, description="Phone number")
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "email": "user@example.com",
+                "phone": None
+            }
+        }
+
+
+class VerifyDeleteRequest(BaseModel):
+    """Request to verify OTP and complete account deletion."""
+    email: Optional[EmailStr] = Field(None, description="Email address")
+    phone: Optional[str] = Field(None, description="Phone number")
+    otp_code: str = Field(
+        ...,
+        description="OTP code",
+        min_length=4,
+        max_length=10
+    )
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "email": "user@example.com",
+                "phone": None,
+                "otp_code": "1010"
+            }
+        }
+
+
+class DeleteResponse(BaseModel):
+    """Response after successful account deletion."""
+    message: str = Field(..., description="Success message")
+    user_id: str = Field(..., description="Deleted user ID")
+    email: str = Field(..., description="Deleted user email")
