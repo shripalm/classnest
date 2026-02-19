@@ -27,7 +27,7 @@ class Resume(BaseModel):
 class TutorCreate(BaseModel):
     """Schema for creating a new tutor."""
     name: str
-    profile_image: Optional[str] = None
+    profile_images: List[str] = Field(default_factory=list)
     intro_video_thumbnail: Optional[str] = None
     country_flag: Optional[str] = None
     country_of_birth: Optional[str] = None
@@ -52,6 +52,7 @@ class TutorCreate(BaseModel):
     professional: Optional[str] = None
     super_tutor: Optional[str] = None
     languages: List[str] = Field(default_factory=list)
+    coursepick: List[str] = Field(default_factory=list)
     resume: Optional[Resume] = None
     student_comments: List[StudentComment] = Field(default_factory=list)
     times_available: List[str] = Field(default_factory=list)  # e.g., ["07", "08", "09"]
@@ -61,7 +62,7 @@ class TutorCreate(BaseModel):
 class TutorUpdate(BaseModel):
     """Schema for updating a tutor."""
     name: Optional[str] = None
-    profile_image: Optional[str] = None
+    profile_images: Optional[List[str]] = None
     intro_video_thumbnail: Optional[str] = None
     country_flag: Optional[str] = None
     country_of_birth: Optional[str] = None
@@ -86,6 +87,7 @@ class TutorUpdate(BaseModel):
     professional: Optional[str] = None
     super_tutor: Optional[str] = None
     languages: Optional[List[str]] = None
+    coursepick: Optional[List[str]] = None
     resume: Optional[Resume] = None
     student_comments: Optional[List[StudentComment]] = None
     times_available: Optional[List[str]] = None
@@ -96,7 +98,7 @@ class TutorResponse(BaseModel):
     """Schema for tutor response."""
     id: str
     name: str
-    profile_image: Optional[str] = None
+    profile_images: List[str] = Field(default_factory=list)
     intro_video_thumbnail: Optional[str] = None
     country_flag: Optional[str] = None
     country_of_birth: Optional[str] = None
@@ -121,6 +123,7 @@ class TutorResponse(BaseModel):
     professional: Optional[str] = None
     super_tutor: Optional[str] = None
     languages: List[str]
+    coursepick: List[str] = Field(default_factory=list)
     resume: Optional[Resume] = None
     student_comments: List[StudentComment] = Field(default_factory=list)
     times_available: List[str] = Field(default_factory=list)
@@ -154,7 +157,7 @@ class TutorResponse(BaseModel):
         data = {
             "id": str(obj.id) if isinstance(obj.id, UUID) else obj.id,
             "name": obj.name,
-            "profile_image": obj.profile_image,
+            "profile_images": obj.profile_images or [],
             "intro_video_thumbnail": obj.intro_video_thumbnail,
             "country_flag": obj.country_flag,
             "country_of_birth": obj.country_of_birth,
@@ -179,6 +182,7 @@ class TutorResponse(BaseModel):
             "professional": obj.professional,
             "super_tutor": obj.super_tutor,
             "languages": obj.languages or [],
+            "coursepick": obj.coursepick or [],
             "resume": resume_obj,
             "student_comments": student_comments,
             "times_available": obj.times_available or [],

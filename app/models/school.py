@@ -11,7 +11,7 @@ class School(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4, nullable=False)
     name = Column(String(255), nullable=False, index=True)
-    profile_image = Column(String(500), nullable=True)
+    profile_images = Column(JSON, default=[], nullable=False)
     intro_video_thumbnail = Column(String(500), nullable=True)
     country_flag = Column(String(500), nullable=True)
     flag = Column(String(500), nullable=True)

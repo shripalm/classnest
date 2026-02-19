@@ -11,7 +11,7 @@ class Tutor(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4, nullable=False)
     name = Column(String(255), nullable=False, index=True)
-    profile_image = Column(String(500), nullable=True)
+    profile_images = Column(JSON, default=[], nullable=False)
     intro_video_thumbnail = Column(String(500), nullable=True)
     country_flag = Column(String(500), nullable=True)
     country_of_birth = Column(String(255), nullable=True)
@@ -36,6 +36,7 @@ class Tutor(Base):
     professional = Column(Text, nullable=True)
     super_tutor = Column(Text, nullable=True)
     languages = Column(JSON, default=[], nullable=False)  # Stores array of language strings
+    coursepick = Column(JSON, default=[], nullable=False)  # Stores array of course names
     resume = Column(JSON, nullable=True)  # Stores resume file info
     student_comments = Column(JSON, default=[], nullable=False)  # Stores array of comments
     times_available = Column(JSON, default=[], nullable=False)  # Stores array of available times (e.g., ["07", "08", "09"])

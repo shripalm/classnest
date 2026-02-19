@@ -27,7 +27,7 @@ class Resume(BaseModel):
 class SchoolCreate(BaseModel):
     """Schema for creating a new school."""
     name: str
-    profile_image: Optional[str] = None
+    profile_images: List[str] = Field(default_factory=list)
     intro_video_thumbnail: Optional[str] = None
     country_flag: Optional[str] = None
     flag: Optional[str] = None
@@ -63,7 +63,7 @@ class SchoolCreate(BaseModel):
 class SchoolUpdate(BaseModel):
     """Schema for updating a school."""
     name: Optional[str] = None
-    profile_image: Optional[str] = None
+    profile_images: Optional[List[str]] = None
     intro_video_thumbnail: Optional[str] = None
     country_flag: Optional[str] = None
     flag: Optional[str] = None
@@ -100,7 +100,7 @@ class SchoolResponse(BaseModel):
     """Schema for school response."""
     id: str
     name: str
-    profile_image: Optional[str] = Field(None, alias="profileImage")
+    profile_images: List[str] = Field(default_factory=list, alias="profileImages")
     intro_video_thumbnail: Optional[str] = Field(None, alias="introVideoThumbnail")
     country_flag: Optional[str] = Field(None, alias="countryFlag")
     flag: Optional[str] = None
@@ -153,7 +153,7 @@ class SchoolResponse(BaseModel):
         data = {
             "id": str(obj.id),
             "name": obj.name,
-            "profile_image": obj.profile_image,
+            "profile_images": obj.profile_images or [],
             "intro_video_thumbnail": obj.intro_video_thumbnail,
             "country_flag": obj.country_flag,
             "flag": obj.flag,

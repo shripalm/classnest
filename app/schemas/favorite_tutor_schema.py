@@ -57,7 +57,7 @@ class TutorWithFavoriteStatus(BaseModel):
     currency: str
     rating: float
     is_favourite: bool
-    profile_image: Optional[str] = None
+    profile_images: List[str] = Field(default_factory=list)
     country_flag: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
