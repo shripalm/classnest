@@ -1,5 +1,4 @@
-truncate table courses;
-truncate table classes;
+truncate table classes CASCADE;
 
 -- Insert new classes
 INSERT INTO classes (id, name) VALUES
