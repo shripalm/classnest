@@ -1,5 +1,4 @@
 from datetime import datetime
-from uuid import uuid4
 from sqlalchemy import Column, String, DateTime, Integer, Float, Index, Text, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from app.db.base_class import Base
@@ -9,7 +8,7 @@ class Class(Base):
     """Class model for storing class information."""
     __tablename__ = "classes"
 
-    id = Column(Integer, primary_key=True, default=uuid4, nullable=False)
+    id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)
     class_name = Column(String(256), nullable=False)
     course_id = Column(Integer, ForeignKey("courses.id"), nullable=False, index=True)
     course_name = Column(String(256), nullable=False)

@@ -1,7 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, and_
 from datetime import datetime
-from uuid import UUID
 from app.models.classes import Class
 from app.schemas.class_schema import ClassCreate, ClassUpdate
 
@@ -19,15 +18,15 @@ class ClassRepository:
         return db_class
 
     @staticmethod
-    def get_class_by_id(db: Session, class_id: str) -> Class:
+    def get_class_by_id(db: Session, class_id: int | str) -> Class:
         """Get a class by ID (excluding soft-deleted)."""
         try:
-            class_uuid = UUID(class_id) if isinstance(class_id, str) else class_id
+            class_int = int(class_id) if isinstance(class_id, str) else class_id
         except (ValueError, TypeError):
             return None
         
         return db.query(Class).filter(
-            Class.id == class_uuid,
+            Class.id == class_int,
             Class.is_deleted == 0
         ).first()
 
@@ -112,15 +111,15 @@ class ClassRepository:
         return classes, total
 
     @staticmethod
-    def update_class(db: Session, class_id: str, class_data: ClassUpdate) -> Class:
+    def update_class(db: Session, class_id: int | str, class_data: ClassUpdate) -> Class:
         """Update a class by ID."""
         try:
-            class_uuid = UUID(class_id) if isinstance(class_id, str) else class_id
+            class_int = int(class_id) if isinstance(class_id, str) else class_id
         except (ValueError, TypeError):
             return None
         
         db_class = db.query(Class).filter(
-            Class.id == class_uuid,
+            Class.id == class_int,
             Class.is_deleted == 0
         ).first()
         
@@ -139,15 +138,15 @@ class ClassRepository:
         return db_class
 
     @staticmethod
-    def delete_class(db: Session, class_id: str) -> bool:
+    def delete_class(db: Session, class_id: int | str) -> bool:
         """Soft delete a class."""
         try:
-            class_uuid = UUID(class_id) if isinstance(class_id, str) else class_id
+            class_int = int(class_id) if isinstance(class_id, str) else class_id
         except (ValueError, TypeError):
             return False
         
         db_class = db.query(Class).filter(
-            Class.id == class_uuid,
+            Class.id == class_int,
             Class.is_deleted == 0
         ).first()
         

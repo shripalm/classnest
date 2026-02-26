@@ -43,7 +43,7 @@ def create_class(class_data: ClassCreate, db: Session = Depends(get_db_sync)):
 
 
 @router.get("/{class_id}", response_model=SuccessResponse[ClassResponse])
-def get_class(class_id: str, db: Session = Depends(get_db_sync)):
+def get_class(class_id: int, db: Session = Depends(get_db_sync)):
     """Get a specific class by ID."""
     try:
         db_class = ClassRepository.get_class_by_id(db, class_id)
@@ -134,7 +134,7 @@ def get_all_classes(
 
 @router.put("/{class_id}", response_model=SuccessResponse[ClassResponse])
 def update_class(
-    class_id: str,
+    class_id: int,
     class_data: ClassUpdate,
     db: Session = Depends(get_db_sync)
 ):
@@ -164,7 +164,7 @@ def update_class(
 
 
 @router.delete("/{class_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_class(class_id: str, db: Session = Depends(get_db_sync)):
+def delete_class(class_id: int, db: Session = Depends(get_db_sync)):
     """Delete (soft delete) a class."""
     try:
         success = ClassRepository.delete_class(db, class_id)

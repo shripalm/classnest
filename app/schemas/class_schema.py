@@ -50,7 +50,7 @@ class ClassUpdate(BaseModel):
 
 class ClassResponse(BaseModel):
     """Schema for class response."""
-    id: UUID
+    id: int
     class_name: str
     course_id: int
     course_name: str
