@@ -1,15 +1,14 @@
-from sqlalchemy import Column, Integer, Text, ForeignKey
+from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship
 from app.db.base_class import Base
 
 
-class Subject(Base):
-    """Subject model for storing subject information."""
-    __tablename__ = "subjects"
+class Course(Base):
+    """Course model for storing course information."""
+    __tablename__ = "courses"
 
     id = Column(Integer, primary_key=True, index=True)
-    subject_name = Column(Text, nullable=False)
-    course_id = Column(Integer, ForeignKey("courses.id"), nullable=False)
+    name = Column(String(255), nullable=False, index=True)
     
-    # Relationship to course
-    course = relationship("Course", back_populates="subjects")
+    # Relationship to subjects
+    subjects = relationship("Subject", back_populates="course", cascade="all, delete-orphan")

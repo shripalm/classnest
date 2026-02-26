@@ -3,8 +3,8 @@ from sqlalchemy.orm import Session
 from typing import List
 from pydantic import BaseModel
 from app.db.session import get_db_sync
-from app.repositories.course_repository import SubjectRepository
-from app.schemas.course_schema import SubjectResponse
+from app.repositories.subject_repository import SubjectRepository
+from app.schemas.subject_schema import SubjectResponse
 
 router = APIRouter(prefix="/subjects")
 
