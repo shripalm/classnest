@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Path
 from sqlalchemy.orm import Session
 from typing import Optional
 from app.db.session import get_db_sync
@@ -334,7 +334,7 @@ def get_classes_by_institute(
 
 @router.get("/age/{age}", response_model=PaginatedResponse[ClassResponse])
 def get_classes_by_age(
-    age: int = Query(..., ge=0, description="Student age"),
+    age: int = Path(..., ge=0, description="Student age"),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db_sync)
