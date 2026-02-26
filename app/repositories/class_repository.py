@@ -1,20 +1,20 @@
 from sqlalchemy.orm import Session
-from app.models.class_model import Class
+from app.models.class_model import Course
 
 
-class ClassRepository:
+class CourseRepository:
     @staticmethod
     def get_all(db: Session):
-        return db.query(Class).all()
+        return db.query(Course).all()
 
     @staticmethod
-    def get_by_id(db: Session, class_id: int):
-        return db.query(Class).filter(Class.id == class_id).first()
+    def get_by_id(db: Session, course_id: int):
+        return db.query(Course).filter(Course.id == course_id).first()
 
     @staticmethod
     def create(db: Session, name: str):
-        class_obj = Class(name=name)
-        db.add(class_obj)
+        course = Course(name=name)
+        db.add(course)
         db.commit()
-        db.refresh(class_obj)
-        return class_obj
+        db.refresh(course)
+        return course

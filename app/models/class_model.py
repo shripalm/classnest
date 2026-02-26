@@ -3,12 +3,12 @@ from sqlalchemy.orm import relationship
 from app.db.base_class import Base
 
 
-class Class(Base):
-    """Class model for storing class information."""
-    __tablename__ = "classes"
+class Course(Base):
+    """Course model for storing course information."""
+    __tablename__ = "courses"
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False, index=True)
     
-    # Relationship to courses
-    courses = relationship("Course", back_populates="class_", cascade="all, delete-orphan")
+    # Relationship to subjects
+    subjects = relationship("Subject", back_populates="course", cascade="all, delete-orphan")

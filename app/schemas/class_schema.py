@@ -2,21 +2,21 @@ from pydantic import BaseModel
 from typing import List
 
 
-class CourseSimple(BaseModel):
+class SubjectSimple(BaseModel):
     id: int
-    name: str
+    subject_name: str
 
     class Config:
         from_attributes = True
 
 
-class ClassBase(BaseModel):
+class CourseBase(BaseModel):
     name: str
 
 
-class ClassResponse(ClassBase):
+class CourseResponse(CourseBase):
     id: int
-    courses: List[CourseSimple] = []
+    subjects: List[SubjectSimple] = []
 
     class Config:
         from_attributes = True

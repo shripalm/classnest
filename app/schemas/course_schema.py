@@ -1,13 +1,13 @@
 from pydantic import BaseModel
 
 
-class CourseBase(BaseModel):
-    name: str
+class SubjectBase(BaseModel):
+    subject_name: str
 
 
-class CourseResponse(CourseBase):
+class SubjectResponse(SubjectBase):
     id: int
-    class_id: int
+    course_id: int
 
     class Config:
         from_attributes = True
