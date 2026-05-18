@@ -1,405 +1,283 @@
-# ClassNest Backend
+# classnest
 
-A modern, scalable FastAPI-based backend for ClassNest, an online tutoring and course management platform. This API handles user authentication, tutoring services, course management, scheduling, and more.
+![Python](https://img.shields.io/badge/Python-3.9%2B-blue?style=for-the-badge&logo=python)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.95.0%2B-009688?style=for-the-badge&logo=fastapi)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14%2B-316192?style=for-the-badge&logo=postgresql)
+![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2.0%2B-orange?style=for-the-badge&logo=sqlalchemy)
+![Docker](https://img.shields.io/badge/Docker-20.10%2B-2496ED?style=for-the-badge&logo=docker)
 
-## 🎯 Features
+## Overview
 
-- **User Authentication & Authorization**: Secure JWT-based authentication with OTP verification
-- **Tutor Management**: Profile management, availability scheduling, and course offerings
-- **Course & Class Management**: Create, manage, and organize courses and classes
-- **Student & Parent Accounts**: Support for multiple user roles with hierarchical relationships
-- **Favorites System**: Students can save and manage favorite tutors
-- **Cart & Booking Management**: Shopping cart and class booking functionality
-- **Calendar & Scheduling**: Advanced scheduling with calendar integration
-- **School Management**: Multi-school support with organizational structure
-- **Email Notifications**: SendGrid integration for email communications
-- **AWS S3 Integration**: Support for file uploads and storage
-- **Comprehensive Logging**: Structured logging with context tracking
-- **Async Processing**: Fast, non-blocking operations with asyncio
-- **Database Migrations**: Alembic-based schema versioning
+`classnest` is a robust backend API built with FastAPI, designed to power an educational platform. It provides comprehensive functionalities for managing classes, courses, tutors, schools, user authentication, scheduling, and more. The project leverages modern asynchronous Python capabilities with SQLAlchemy 2.0 for database interactions, ensuring high performance and scalability.
 
-## 🛠️ Tech Stack
+This repository contains the core API logic, database models, and business services necessary for a dynamic learning environment.
 
-- **Framework**: [FastAPI](https://fastapi.tiangolo.com/) - Modern Python web framework
-- **Database**: PostgreSQL with async support via `asyncpg`
-- **ORM**: SQLAlchemy 2.0+ (async)
-- **Migrations**: Alembic
-- **Authentication**: JWT + Python-Jose
-- **Email**: SendGrid
-- **Cloud Storage**: AWS S3
-- **Testing**: pytest with pytest-asyncio
-- **Server**: Uvicorn
-- **Containerization**: Docker & Docker Compose
+## Features
 
-## 📋 Prerequisites
+*   **User Authentication & Authorization**: Secure user management with JWT, password hashing (bcrypt), and OTP verification.
+*   **Class & Course Management**: APIs for creating, retrieving, updating, and deleting classes and courses.
+*   **Tutor & School Profiles**: Dedicated endpoints for managing tutor and school information.
+*   **Scheduling & Calendar**: Functionality for managing schedules, bookings, and calendar events.
+*   **Shopping Cart**: API for handling user's cart items, likely for course enrollment.
+*   **Favorites**: Users can mark favorite tutors or classes.
+*   **Database ORM**: Asynchronous database operations using SQLAlchemy 2.0 with `asyncpg`.
+*   **Data Validation**: Robust data validation and serialization with Pydantic 2.0.
+*   **Email Services**: Integration with SendGrid for sending transactional emails (e.g., OTPs).
+*   **Configuration Management**: Environment-specific settings handled via `python-dotenv` and Pydantic Settings.
+*   **Health Monitoring**: Dedicated health check endpoint.
 
-- Python 3.12+
-- PostgreSQL 12+
-- Docker & Docker Compose (optional, for containerized deployment)
-- AWS credentials (for S3 integration)
-- SendGrid API key (for email functionality)
+## Tech Stack
 
-## 🚀 Quick Start
+*   **Language**: Python 3.9+
+*   **Web Framework**: FastAPI
+*   **ASGI Server**: Uvicorn
+*   **Database**: PostgreSQL (via `asyncpg` and `psycopg2`)
+*   **ORM**: SQLAlchemy 2.0
+*   **Migrations**: Alembic
+*   **Data Validation**: Pydantic 2.0
+*   **Authentication**: PyJWT, Passlib (bcrypt), python-jose
+*   **Email**: SendGrid, `email-validator`
+*   **HTTP Client**: httpx, requests
+*   **Logging**: structlog
+*   **Testing**: pytest, pytest-asyncio
+*   **Containerization**: Docker, Docker Compose
+*   **Cloud Integration**: boto3 (for AWS services, e.g., S3 for uploads)
+*   **Data Processing**: pandas, numpy, scipy (potential for analytics or data manipulation)
 
-### 1. Clone the Repository
+## Installation
+
+To get `classnest` up and running locally, follow these steps:
+
+### Prerequisites
+
+*   Python 3.9+
+*   Poetry (recommended for dependency management) or pip
+*   Docker & Docker Compose (for database setup)
+
+### 1. Clone the repository
 
 ```bash
-git clone https://github.com/shripalm/ClassNest.git
-cd backend-classnest
+git clone https://github.com/shripalm/classnest.git
+cd classnest
 ```
 
-### 2. Create Virtual Environment
+### 2. Set up Environment Variables
+
+Create a `.env` file in the project root based on `.env.example` and fill in the required values.
 
 ```bash
-# Windows
-python -m venv venv
-venv\Scripts\activate
-
-# macOS/Linux
-python3 -m venv venv
-source venv/bin/activate
+cp .env.example .env
+# Open .env and configure your settings
 ```
 
-### 3. Install Dependencies
+### 3. Database Setup (with Docker Compose)
+
+Start the PostgreSQL database using Docker Compose:
+
+```bash
+docker-compose up -d db
+```
+
+### 4. Install Dependencies
+
+Using `pip`:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Environment Configuration
+### 5. Run Database Migrations
 
-Create a `.env` file in the project root with the following variables:
-
-```env
-# Database
-DATABASE_URL=postgresql+asyncpg://username:password@localhost:5432/classnest
-
-# JWT Configuration
-SECRET_KEY=your-secret-key-here
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=30
-
-# Email Configuration
-SENDGRID_API_KEY=your-sendgrid-api-key
-
-# AWS Configuration
-AWS_ACCESS_KEY_ID=your-aws-access-key
-AWS_SECRET_ACCESS_KEY=your-aws-secret-key
-AWS_REGION=your-aws-region
-AWS_S3_BUCKET_NAME=your-bucket-name
-
-# Application Settings
-PROJECT_NAME=ClassNest
-STAGE=development
-DEBUG=True
-```
-
-### 5. Database Setup
-
-Initialize the database and run migrations:
+Once the database is running, apply migrations using Alembic:
 
 ```bash
-# Check migration status
-alembic current
-
-# Run all pending migrations
 alembic upgrade head
-
-# Create a new migration (after modifying models)
-alembic revision --autogenerate -m "description of changes"
 ```
 
-### 6. Run the Application
+### 6. Start the Application
 
 ```bash
-# Development server with auto-reload
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-
-# Or using the app directly
-python -m uvicorn app.main:app --reload
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-The API will be available at `http://localhost:8000`
+The API will be accessible at `http://localhost:8000`. The interactive API documentation (Swagger UI) will be available at `http://localhost:8000/docs`.
 
-**Interactive API Documentation**: `http://localhost:8000/docs` (Swagger UI)
+## Environment Variables
 
-## 🐳 Docker Setup
+The application relies on several environment variables for configuration. A `.env.example` file is provided for reference.
 
-### Build and Run with Docker Compose
+| Variable                      | Description                                                               |
+| :---------------------------- | :------------------------------------------------------------------------ |
+| `PROJECT_NAME`                | Name of the project.                                                      |
+| `APP_ENV`                     | Application environment (e.g., `development`, `production`).              |
+| `APP_HOST`                    | Host for the application.                                                 |
+| `APP_PORT`                    | Port for the application.                                                 |
+| `STAGE_PATH`                  | Base path for API staging (if applicable).                                |
+| `DB_URL`                      | PostgreSQL database connection URL (e.g., `postgresql+asyncpg://user:pass@host:port/db`). |
+| `DB_POOL_SIZE`                | SQLAlchemy connection pool size.                                          |
+| `DB_MAX_OVERFLOW`             | SQLAlchemy max overflow connections.                                      |
+| `DB_POOL_TIMEOUT`             | SQLAlchemy pool timeout.                                                  |
+| `DB_POOL_RECYCLE`             | SQLAlchemy pool recycle time.                                             |
+| `SECRET_KEY`                  | Secret key for JWT token signing. **CRITICAL for security.**              |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | Expiration time for access tokens in minutes.                             |
+| `LOG_LVL`                     | Logging level (e.g., `INFO`, `DEBUG`).                                    |
+| `SMTP_HOST`                   | SMTP server host for email.                                               |
+| `SMTP_PORT`                   | SMTP server port.                                                         |
+| `SMTP_USER`                   | SMTP username.                                                            |
+| `SMTP_PASSWORD`               | SMTP password.                                                            |
+| `SMTP_FROM_EMAIL`             | Email address for sending emails.                                         |
+| `SMTP_FROM_NAME`              | Name associated with the sender email.                                    |
+| `SENDGRID_API_KEY`            | SendGrid API key for transactional emails.                                |
+| `SENDGRID_FROM_EMAIL`         | SendGrid sender email address.                                            |
+| `SENDGRID_FROM_NAME`          | SendGrid sender name.                                                     |
+| `OTP_EXPIRE_MINUTES`          | Expiration time for One-Time Passwords in minutes.                        |
+| `OTP_LENGTH`                  | Length of generated One-Time Passwords.                                   |
+
+## API Endpoints
+
+The API exposes a set of endpoints under the `/api/v1` prefix. Detailed documentation can be found at `/docs` or `/redoc` when the application is running.
+
+```
+/api/v1/auth
+/api/v1/calendar
+/api/v1/cart
+/api/v1/dev_settings
+/api/v1/routers/auth
+/api/v1/routers/calendar
+/api/v1/routers/cart
+/api/v1/routers/classes
+/api/v1/routers/courses
+/api/v1/routers/dev_settings
+/api/v1/routers/favorites
+/api/v1/routers/health
+/api/v1/routers/schedule
+/api/v1/routers/schools
+/api/v1/routers/subjects
+/api/v1/routers/tutors
+/api/v1/schedule
+```
+
+## Folder Structure
+
+The project follows a modular structure to ensure maintainability and scalability:
+
+```
+.
+├── .env.example             # Example environment variables
+├── Dockerfile               # Docker build instructions
+├── docker-compose.yml       # Docker Compose configuration
+├── requirements.txt         # Python dependencies
+└── app/
+    ├── __init__.py
+    ├── main.py              # FastAPI application entry point
+    ├── api/                 # API versioning
+    │   └── v1/
+    │       └── routers/     # API endpoint definitions
+    │           ├── auth.py
+    │           ├── calendar.py
+    │           ├── cart.py
+    │           ├── classes.py
+    │           ├── courses.py
+    │           ├── dev_settings.py
+    │           ├── favorites.py
+    │           ├── health.py
+    │           ├── schedule.py
+    │           ├── schools.py
+    │           ├── subjects.py
+    │           └── tutors.py
+    ├── core/                # Core application configurations and utilities
+    │   ├── config.py        # Pydantic settings management
+    │   ├── logging_config.py
+    │   └── security.py      # JWT, password hashing utilities
+    ├── db/                  # Database related files
+    │   ├── session.py       # Database session management
+    │   ├── base_class.py    # Base class for SQLAlchemy models
+    │   └── listeners.py
+    ├── enums/               # Enumerations
+    │   └── user_enum.py
+    ├── middleware/          # FastAPI middleware
+    │   ├── client_middleware.py
+    │   └── logging_middleware.py
+    ├── models/              # SQLAlchemy ORM models
+    │   ├── user.py
+    │   ├── tutor.py
+    │   ├── school.py
+    │   ├── course_model.py
+    │   ├── classes.py
+    │   ├── schedule.py
+    │   ├── calendar.py
+    │   ├── cart.py
+    │   ├── otp.py
+    │   ├── child.py
+    │   ├── favorite_tutor.py
+    │   └── subject_model.py
+    ├── repositories/        # Database interaction logic (CRUD operations)
+    │   ├── user_repository.py
+    │   ├── tutor_repository.py
+    │   ├── school_repository.py
+    │   ├── course_repository.py
+    │   ├── class_repository.py
+    │   ├── schedule_repository.py
+    │   ├── calendar_repository.py
+    │   ├── cart_repository.py
+    │   ├── otp_repository.py
+    │   ├── child_repository.py
+    │   ├── favorite_tutor_repository.py
+    │   └── subject_repository.py
+    ├── schemas/             # Pydantic models for request/response validation
+    │   ├── auth_schema.py
+    │   ├── user_schema.py
+    │   ├── tutor_schema.py
+    │   ├── school_schema.py
+    │   ├── course_schema.py
+    │   ├── class_schema.py
+    │   ├── schedule_schema.py
+    │   ├── calendar_schema.py
+    │   ├── cart_schema.py
+    │   ├── favorite_tutor_schema.py
+    │   ├── subject_schema.py
+    │   └── response.py      # Generic response schemas
+    ├── services/            # Business logic and service layer
+    │   ├── auth_service.py
+    │   └── upload.py        # File upload service (e.g., to S3)
+    └── utils/               # Utility functions
+        ├── exception_handlers.py
+        ├── logging.py
+        ├── pagination.py
+        └── response.py
+```
+
+## Scripts
+
+Currently, there are no custom shell scripts defined in the metadata. Standard Python commands for running the application, managing dependencies, and performing database migrations are used.
+
+*   **Run application**: `uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload`
+*   **Run migrations**: `alembic upgrade head`
+*   **Generate new migration**: `alembic revision --autogenerate -m "Description of migration"`
+*   **Run tests**: `pytest`
+
+## Deployment
+
+The project includes a `Dockerfile` for containerizing the application and a `docker-compose.yml` for orchestrating the application with its database.
+
+To build and run the application using Docker Compose:
 
 ```bash
-# Build and start all services
 docker-compose up --build
-
-# Run in background
-docker-compose up -d
-
-# Stop services
-docker-compose down
-
-# View logs
-docker-compose logs -f app
 ```
 
-The application will be accessible at `http://localhost:8000`
+This will build the `classnest` service image, start the PostgreSQL database, and run the FastAPI application.
 
-## 📁 Project Structure
+## Future Improvements
 
-```
-backend-classnest/
-├── alembic/                    # Database migrations
-│   ├── versions/               # Migration scripts
-│   ├── env.py                  # Migration environment config
-│   └── script.py.mako          # Migration template
-├── app/
-│   ├── api/
-│   │   └── v1/
-│   │       ├── routers/        # API endpoint routers
-│   ├── core/
-│   │   ├── config.py           # Application configuration
-│   │   ├── security.py         # JWT & authentication logic
-│   │   └── logging_config.py   # Logging setup
-│   ├── db/
-│   │   ├── session.py          # Database session management
-│   │   ├── base_class.py       # Base model class
-│   │   └── listeners.py        # SQLAlchemy event listeners
-│   ├── models/                 # SQLAlchemy ORM models
-│   ├── schemas/                # Pydantic request/response schemas
-│   ├── repositories/           # Data access layer
-│   ├── services/               # Business logic layer
-│   ├── middleware/             # FastAPI middleware
-│   ├── enums/                  # Enum definitions
-│   ├── utils/                  # Utility functions
-│   ├── static/                 # Static files
-│   └── main.py                 # Application entry point
-├── tests/                      # Test suite
-│   ├── conftest.py             # pytest fixtures and configuration
-│   └── test_*.py               # Test modules
-├── docker-compose.yml          # Docker Compose configuration
-├── Dockerfile                  # Docker image configuration
-├── alembic.ini                 # Alembic configuration
-├── pytest.ini                  # pytest configuration
-├── requirements.txt            # Python dependencies
-└── README.md                   # This file
-```
+*   **Real-time Features**: Integrate WebSockets for real-time notifications (e.g., new messages, schedule updates).
+*   **Advanced Search & Filtering**: Implement more sophisticated search capabilities for classes, courses, and tutors.
+*   **Payment Gateway Integration**: Add support for payment processing for course enrollments.
+*   **Admin Panel**: Develop an administrative interface for managing platform content and users.
+*   **Caching**: Implement caching strategies (e.g., Redis) to improve API response times for frequently accessed data.
+*   **CI/CD Pipeline**: Set up continuous integration and deployment for automated testing and deployment.
+*   **Observability**: Enhance monitoring, logging, and tracing for production environments.
 
-## 🔌 API Endpoints
+## License
 
-### Authentication
-- `POST /api/v1/auth/register` - Register a new user
-- `POST /api/v1/auth/login` - Login user
-- `POST /api/v1/auth/refresh` - Refresh access token
-- `POST /api/v1/auth/verify-otp` - Verify OTP
-- `POST /api/v1/auth/request-otp` - Request OTP
-
-### Tutors
-- `GET /api/v1/tutors` - List all tutors
-- `GET /api/v1/tutors/{tutor_id}` - Get tutor details
-- `POST /api/v1/tutors` - Create new tutor profile
-- `PUT /api/v1/tutors/{tutor_id}` - Update tutor profile
-
-### Courses
-- `GET /api/v1/courses` - List all courses
-- `POST /api/v1/courses` - Create new course
-- `GET /api/v1/courses/{course_id}` - Get course details
-
-### Classes
-- `GET /api/v1/classes` - List all classes
-- `POST /api/v1/classes` - Create new class
-- `GET /api/v1/classes/{class_id}` - Get class details
-
-### Favorites
-- `GET /api/v1/favorites` - Get user's favorite tutors
-- `POST /api/v1/favorites` - Add tutor to favorites
-- `DELETE /api/v1/favorites/{tutor_id}` - Remove from favorites
-
-### Scheduling
-- `GET /api/v1/schedule` - Get schedule
-- `POST /api/v1/schedule` - Create schedule entry
-- `GET /api/v1/calendar` - Get calendar events
-
-### Cart
-- `GET /api/v1/cart` - Get user's cart
-- `POST /api/v1/cart` - Add item to cart
-- `DELETE /api/v1/cart/{item_id}` - Remove from cart
-
-### Health Check
-- `GET /api/v1/health` - Application health status
-
-## 🧪 Testing
-
-Run the test suite:
-
-```bash
-# Run all tests
-pytest
-
-# Run with verbose output
-pytest -v
-
-# Run specific test file
-pytest tests/test_auth.py
-
-# Run with coverage
-pytest --cov=app tests/
-
-# Run with markers
-pytest -m auth
-```
-
-### Test Configuration
-
-Tests are configured in `pytest.ini`. See `tests/conftest.py` for fixtures and test setup.
-
-## 📊 Database Migrations
-
-### Create a Migration
-
-After modifying models, create a new migration:
-
-```bash
-alembic revision --autogenerate -m "Add new_field to users table"
-```
-
-### View Migration Status
-
-```bash
-alembic current
-alembic history --indicate-current
-```
-
-### Rollback Migrations
-
-```bash
-# Rollback one revision
-alembic downgrade -1
-
-# Rollback to specific revision
-alembic downgrade <revision_id>
-
-# Rollback to beginning
-alembic downgrade base
-```
-
-## 🔐 Environment Variables
-
-Key environment variables:
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `DATABASE_URL` | PostgreSQL connection URL | Required |
-| `SECRET_KEY` | JWT secret key | Required |
-| `ALGORITHM` | JWT algorithm | HS256 |
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | Token expiration time | 30 |
-| `SENDGRID_API_KEY` | SendGrid API key | Optional |
-| `AWS_ACCESS_KEY_ID` | AWS access key | Optional |
-| `AWS_SECRET_ACCESS_KEY` | AWS secret key | Optional |
-| `DEBUG` | Debug mode | False |
-
-## 🔧 Development
-
-### Code Style
-
-The project follows PEP 8 guidelines. Format code with:
-
-```bash
-# Install formatting tools
-pip install black flake8 isort
-
-# Format code
-black app/
-isort app/
-
-# Check style
-flake8 app/
-```
-
-### Logging
-
-The application uses structured logging with `structlog`. Check logs in the application output or configured log files.
-
-## 🚢 Deployment
-
-### Docker Deployment
-
-```bash
-# Build image
-docker build -t classnest-backend:latest .
-
-# Run container
-docker run -p 8000:80 \
-  -e DATABASE_URL=postgresql+asyncpg://user:pass@db:5432/classnest \
-  -e SECRET_KEY=your-secret-key \
-  classnest-backend:latest
-```
-
-### Production Considerations
-
-- Set `DEBUG=False` in production
-- Use a strong `SECRET_KEY`
-- Enable HTTPS/TLS
-- Use environment-specific configuration
-- Set up proper database backups
-- Configure monitoring and alerts
-- Use a production-grade ASGI server (e.g., Gunicorn with Uvicorn workers)
-
-## 📝 API Documentation
-
-Once the server is running, view:
-
-- **Swagger UI**: `http://localhost:8000/docs`
-- **ReDoc**: `http://localhost:8000/redoc`
-
-## 🤝 Contributing
-
-1. Create a feature branch: `git checkout -b feature/amazing-feature`
-2. Commit changes: `git commit -m 'Add amazing feature'`
-3. Push to branch: `git push origin feature/amazing-feature`
-4. Open a Pull Request
-
-Please ensure:
-- All tests pass
-- Code follows PEP 8 style guide
-- New features include tests
-- Documentation is updated
-
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 🆘 Troubleshooting
-
-### Database Connection Issues
-
-```bash
-# Check PostgreSQL is running
-# Verify DATABASE_URL format: postgresql+asyncpg://user:password@host:port/database
-
-# Check migrations are up to date
-alembic current
-alembic upgrade head
-```
-
-### Port Already in Use
-
-```bash
-# Change port
-uvicorn app.main:app --port 8001
-```
-
-### Import Errors
-
-```bash
-# Reinstall dependencies
-pip install -r requirements.txt --force-reinstall
-```
-
-## 📞 Support
-
-For issues and questions:
-- Open an issue on GitHub
-- Contact: shripal.nextstep@gmail.com
-
----
-
-**Made with ❤️ by the Shripal Mehta**
+This project is licensed under the MIT License - see the `LICENSE` file for details (if available).
